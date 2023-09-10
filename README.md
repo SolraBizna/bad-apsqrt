@@ -10,11 +10,17 @@ Because rustc\_apfloat implements almost every operation needed for RISC-V float
 
 # Algorithm
 
-This crate implements a very unsophisticated, but simple to understand, algorithm. It uses a sort of binary search to *very slowly* refine an initial, terrible estimate of the square root, using only integer addition/subtraction and floating point multiplication. I implemented this algorithm because Newton-Raphson went over my head. If you don't like my algorithm, or find one ULP of error to be unacceptable, I would seriously love it if you would [get in contact with me](mailto:solra@bizna.name) and help me understand a better algorithm (like Newton-Raphson).
+This crate implements a very unsophisticated, but simple to understand, algorithm. It uses a sort of binary search to *very slowly* refine an initial, terrible estimate of the square root, using only integer addition/subtraction and floating point multiplication. I implemented this algorithm because Newton-Raphson went over my head. If you don't like my algorithm, I would seriously love it if you would [get in contact with me](mailto:solra@bizna.name) and help me understand a better algorithm (like Newton-Raphson).
 
 # Accuracy
 
-If there is an exact solution, Bad APSqRt always finds it. 75% of inexact solutions will be correctly rounded, 25% will be off by a single ULP—the least significant bit will be wrong but all other bits will be right. (If I made full use of the AP part of the APFloat library, I could reduce the error to zero—but math is hard and I am dumb.) All NaNs it produces are "canon NaNs" according to the RISC-V standard.
+If there is an exact solution, either form of Bad APSqRt always finds it. For `bad_sqrt_slow`, 75% of inexact solutions will be correctly rounded, 25% will be off by a single ULP—the least significant bit will be wrong but all other bits will be right. For `bad_sqrt_slower`, it will usually take twice as many iterations, but the answer will be 100% correct. (`bad_sqrt_slower` is, unfortunately, due to limitations of rustc\_apfloat, only available for 32- and 64-bit floats.)
+
+All NaNs produced by Bad APSqRt are "canon NaNs" according to the RISC-V standard.
+
+# How to use
+
+Don't! This algorithm is bad. If you're already deep enough in the rustc\_apfloat rabbit hole to need this crate, its rustdoc should be easy to understand. If you're not, then you'll be saving yourself a lot of headache by finding another solution to your problem.
 
 # Legalese
 

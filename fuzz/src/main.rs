@@ -28,9 +28,10 @@ struct TrialResults {
 impl TrialResults {
     fn report(&self) -> String {
         format!(
-            " {} trials, {} exact, {:.1}% disagreement\n inexact error {:.2} mean {} max ulp; {} total fails\n {:.2}/{:.2} mean iterations per trial ",
+            " {} trials, {} exact, {}={:.8}% disagreement\n inexact error mean={:.2} max={} (ulp); {} total fails\n {:.2}/{:.2} mean iterations per trial ",
             self.trials,
             self.exacts,
+            self.inexact_disagreements,
             self.inexact_disagreements as f64 * 100.0 / self.trials as f64,
             self.inexact_error_sum as f64 / self.inexact_disagreements as f64,
             self.inexact_error_max,
@@ -66,7 +67,7 @@ fn $name(results: &mut TrialResults) {
         return
     }
     let native_sqrt = (($f::from_bits(bits) as f64).sqrt() as $f).to_bits();
-    let (evil_sqrt, iterations) = bad_apsqrt::bad_sqrt::<bad_apsqrt::BadEstimator, $u>(bits, Round::NearestTiesToAway);
+    let (evil_sqrt, iterations) = bad_apsqrt::bad_sqrt_slower::<bad_apsqrt::BadEstimator, $u>(bits, Round::NearestTiesToEven);
     results.trials += 1;
     results.$trials += 1;
     if evil_sqrt.status == Status::OK {
@@ -87,7 +88,7 @@ fn $name(results: &mut TrialResults) {
             let error = (if evil_sqrt > native_sqrt { evil_sqrt - native_sqrt } else { native_sqrt - evil_sqrt }) as u32;
             results.inexact_error_sum += error as u64;
             results.inexact_error_max = results.inexact_error_max.max(error);
-            if error > 1 {
+            if error > 0 {
                 println!(
                     format!(concat!($fstr, " square {:08X}/{:e}, true root = {:08X}/{:e}, bad root = {:08X}/{:e}"),
                     bits, $f::from_bits(bits),
@@ -190,5 +191,5 @@ fn main() {
         a += &l.lock().0;
         a
     });
-    println!("Final report:\n{}", results.report());
+    println!(format!("Final report:\n{}", results.report()));
 }
