@@ -348,12 +348,13 @@ fn defined_cases<B:FloatRepr>(square: B::Bits) -> Option<(StatusAnd<B::Bits>, u3
             value: B::CANON_NAN, // sqrt(-x) = NaN
         }, 0))
     } else if square == B::INFINITY {
+        // square root of infinity is infinity
         Some((StatusAnd {
             status: Status::OK,
             value: B::INFINITY,
         }, 0))
     } else if B::get_exponent(&square) > B::MAX_EXPONENT {
-        // square root of infinity is NaN, square root of NaN is NaN?
+        // square root of NaN is NaN
         Some((StatusAnd {
             status: Status::INVALID_OP,
             value: B::CANON_NAN,
