@@ -1,4 +1,4 @@
-This is Bad APSqRt, a bad square root algorithm for use with [rustc\_apfloat](https://crates.io/crates/rustc_apfloat). 
+This is Bad APSqRt, a bad square root algorithm for use with [rustc\_apfloat](https://crates.io/crates/rustc_apfloat). Please use [IEEE APSqRt](https://github.com/SolraBizna/ieee-apsqrt) instead!
 
 (APFloat is short for Arbitrary Precision Floating Point. Bad APSqRt is short for Bad Algorithm for Square Roots with APFloat. Unlike APFloat, it is only designed to work with IEEE 754 single-, double-, and quad-precision floats; thus, it does not provide arbitrary precision itself.)
 
@@ -8,9 +8,11 @@ rustc\_apfloat is a software floating point library. It's a Rust conversion of "
 
 Because rustc\_apfloat implements almost every operation needed for RISC-V floating point emulation, it made my life a lot easier—but that last operation, square root, is important, so I had to implement it myself. It would have been faster and easier to use the host's `sqrt` functions for these, and to accept the inconsistencies in emulation, but my emulator is meant to fit in a multiplayer game's logic loop (?!!?!) so it *has* to be deterministic. A bad algorithm that is wrong in exactly the same ways on any platform is, therefore, better than a good algorithm that has even the slightest disagreement between platforms.
 
+I implemented this naive guess-and-check algorithm first, partly to see if I could. Once I'd implemented and characterized it, I decided to try implementing Newton-Raphson instead. That implementation became the [IEEE APSqRt](https://github.com/SolraBizna/ieee-apsqrt) crate. This crate continues to exist for educational purposes, but otherwise, you should really use IEEE APSqRt instead!
+
 # Algorithm
 
-This crate implements a very unsophisticated, but simple to understand, algorithm. It uses a sort of binary search to *very slowly* refine an initial, terrible estimate of the square root, using only integer addition/subtraction and floating point multiplication. I implemented this algorithm because Newton-Raphson went over my head. If you don't like my algorithm, I would seriously love it if you would [get in contact with me](mailto:solra@bizna.name) and help me understand a better algorithm (like Newton-Raphson).
+This crate implements a very unsophisticated, but simple to understand, algorithm. It uses a sort of binary search to *very slowly* refine an initial, terrible estimate of the square root, using only integer addition/subtraction and floating point multiplication.
 
 # Accuracy
 
@@ -20,7 +22,7 @@ All NaNs produced by Bad APSqRt are "canon NaNs" according to the RISC-V standar
 
 # How to use
 
-Don't! This algorithm is bad. If you're already deep enough in the rustc\_apfloat rabbit hole to need this crate, its rustdoc should be easy to understand. If you're not, then you'll be saving yourself a lot of headache by finding another solution to your problem.
+Don't! This algorithm is bad. [IEEE APSqRt](https://github.com/SolraBizna/ieee-apsqrt) is much faster!
 
 # Legalese
 
