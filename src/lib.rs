@@ -124,19 +124,6 @@ pub trait Estimator {
 }
 
 fn inner_bad_sqrt<E:Estimator, B:FloatBits>(square: B, round_mode: Round) -> Result<(StatusAnd<B>, u32),(B, u32)> {
-    if square & !(B::MAX>>1) != B::ZERO {
-        // square root of any negative number is NaN
-        return Ok((StatusAnd {
-            status: Status::INVALID_OP,
-            value: B::CANON_NAN,
-        }, 0))
-    } else if square.get_exponent() > B::MAX_EXPONENT {
-        // square root of infinity is NaN, square root of NaN is NaN?
-        return Ok((StatusAnd {
-            status: Status::INVALID_OP,
-            value: B::CANON_NAN,
-        }, 0))
-    }
     let square_f = B::Float::from_bits(square.into());
     let estimate = E::estimate_sqrt(square);
     let error = get_error(estimate, &square_f, round_mode).map_err(|x|(x,0))?;
@@ -209,15 +196,31 @@ fn inner_bad_sqrt<E:Estimator, B:FloatBits>(square: B, round_mode: Round) -> Res
 }
 
 pub fn bad_sqrt<E:Estimator, B:FloatBits>(square: B, round_mode: Round) -> (StatusAnd<B>, u32) {
-    if square == B::ZERO || square == !(B::MAX>>1) {
+    if square == B::ZERO {
         return (StatusAnd {
             status: Status::OK,
-            value: B::ZERO,
+            value: B::ZERO, // sqrt(0) = 0
+        }, 0)
+    } else if square == !(B::MAX>>1) {
+        return (StatusAnd {
+            status: Status::OK,
+            value: !(B::MAX>>1), // sqrt(-0) = -0
+        }, 0)
+    } else if square & !(B::MAX>>1) != B::ZERO {
+        return (StatusAnd {
+            status: Status::INVALID_OP,
+            value: B::CANON_NAN, // sqrt(-x) = NaN
         }, 0)
     } else if square == B::INFINITY {
         return (StatusAnd {
             status: Status::OK,
             value: B::INFINITY,
+        }, 0)
+    } else if square.get_exponent() > B::MAX_EXPONENT {
+        // square root of infinity is NaN, square root of NaN is NaN?
+        return (StatusAnd {
+            status: Status::INVALID_OP,
+            value: B::CANON_NAN,
         }, 0)
     } else if square < B::IMPLIED_ONE {
         // Subnormal numbers require slightly special handling.
@@ -364,7 +367,22 @@ mod tests {
     }
     #[test]
     fn the_infinite_nan() {
-
+        assert_eq!(bad_sqrt::<BadEstimator,u32>(u32::INFINITY, Round::NearestTiesToAway), (StatusAnd {
+            value: u32::INFINITY,
+            status: Status::OK,
+        }, 0));
+        assert_eq!(bad_sqrt::<BadEstimator,u32>(u32::INFINITY+1, Round::NearestTiesToAway), (StatusAnd {
+            value: u32::CANON_NAN,
+            status: Status::INVALID_OP,
+        }, 0));
+        assert_eq!(bad_sqrt::<BadEstimator,u32>(u32::INFINITY|0x80000000, Round::NearestTiesToAway), (StatusAnd {
+            value: u32::CANON_NAN,
+            status: Status::INVALID_OP,
+        }, 0));
+        assert_eq!(bad_sqrt::<BadEstimator,u32>(u32::INFINITY|0x80000001, Round::NearestTiesToAway), (StatusAnd {
+            value: u32::CANON_NAN,
+            status: Status::INVALID_OP,
+        }, 0));
     }
     #[test] #[ignore]
     fn subnormal_test() {
